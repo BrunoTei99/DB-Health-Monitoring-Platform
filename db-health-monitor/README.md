@@ -23,3 +23,12 @@ docker-compose up -d
 - scripts/chaos.sh - Script para testes caóticos
 - scripts/collect-metrics.ps1 - Script de coleta de metricas
 - api/app.py - API principal
+- grafana/dashboards/db-health-overview.json - Dashboard "DB Health Overview" (PostgreSQL + MongoDB)
+
+## Dashboards do Grafana
+
+O dashboard "DB Health Overview" está versionado em `grafana/dashboards/db-health-overview.json`. Para o reimportar:
+
+1. Grafana (http://localhost:3000) → Dashboards → New → Import
+2. Upload do ficheiro `grafana/dashboards/db-health-overview.json`
+3. Escolhe o data source Prometheus e confirma a importação
