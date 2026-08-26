@@ -1,0 +1,6 @@
+flask==3.0.3
+psycopg2-binary==2.9.9
+pymongo==4.8.0
+azure-monitor-opentelemetry==1.8.9
+opentelemetry-instrumentation-pymongo==0.64b0
+setuptools<81
