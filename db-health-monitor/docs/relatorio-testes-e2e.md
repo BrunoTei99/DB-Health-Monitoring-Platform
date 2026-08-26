@@ -248,6 +248,22 @@ t=+30s  alerta=normal | numbackends=2   <- NORMAL
 
 **Ciclo completo confirmado: Normal → Firing (2m15s) → resolve → Normal (+30s).** ✅
 
+```mermaid
+sequenceDiagram
+    participant Op as chaos.ps1
+    participant PG as PostgreSQL
+    participant Al as Alerta Grafana
+
+    Note over Al: t=0s — Normal
+    Op->>PG: connections (50x pg_sleep(300))
+    PG-->>Op: numbackends salta 2 → 47
+    Note over Al: threshold (40) excedido, pending period (2m) a contar
+    Note over Al: t=+135s — FIRING
+    Op->>PG: resolve (pg_terminate_backend ×51)
+    PG-->>Op: numbackends volta a 2
+    Note over Al: t=+165s (~30s depois do resolve) — Normal
+```
+
 ### Cenário 2 — Query lenta
 
 ```powershell
@@ -324,6 +340,22 @@ A meio da janela de flatline, voltei a correr `status` e encontrei uma **fila de
 6314 | Lock | SELECT status, COUNT(*), ... FROM orders G...        <- API (traffic.ps1)
 ```
 → achado que o guião original não previa: o lock bloqueia genuinamente **qualquer** consumidor da tabela `orders`, incluindo a própria introspeção de schema do `postgres_exporter` — um efeito em cascata mais realista do que "só o load script congela".
+
+```mermaid
+flowchart TB
+    L["Sessão 6268 — BEGIN;\nLOCK TABLE orders\nIN ACCESS EXCLUSIVE MODE"]
+    L -->|bloqueia| S1["6269 — API /orders/summary\n(traffic.ps1)"]
+    L -->|bloqueia| S2["6285 — API /orders/summary\n(traffic.ps1)"]
+    L -->|bloqueia| S3["6294 — postgres_exporter\n(introspeção de schema)"]
+    L -->|bloqueia| S4["6304 — API /orders/summary\n(traffic.ps1)"]
+    L -->|bloqueia| S5["6305 — postgres_exporter\n(introspeção de schema)"]
+    L -->|bloqueia| S6["6314 — API /orders/summary\n(traffic.ps1)"]
+```
+
+```mermaid
+flowchart LR
+    A["t=0-45s\nQueda\n2,61 → 1,19 commits/s"] --> B["t=45-105s\nFlatline\nsem dados (0 commits)"] --> C["t=105-135s\nRecuperação\n2,66 → 3,01 commits/s"] --> D["t>135s\nNormal"]
+```
 
 O lock auto-resolveu aos 90s (sem precisar de forçar `resolve`). Confirmação final:
 ```powershell
