@@ -168,6 +168,8 @@ db-health-monitor/
 
 Para reimportar o dashboard: Grafana → Dashboards → New → Import → Upload de `grafana/dashboards/db-health-overview.json`.
 
+![Dashboard DB Health Overview](db-health-monitor/docs/screenshots/Grafana_dashboard.png)
+
 ## Log aggregation
 
 O PostgreSQL corre com `log_min_duration_statement=1000` — toda query mais lenta que 1s fica registada. O Filebeat envia esses logs, mais o stdout/stderr de todos os containers, para o Elasticsearch (data streams `db-logs-*`), pesquisáveis no Kibana ou diretamente num painel do Grafana. Detalhe de implementação relevante: os campos personalizados usam `service.name` (não `service`), para não colidir com o esquema ECS do Elasticsearch — ver [fase4-conceitos.md](docs/fase4-conceitos.md#2-ecs-elastic-common-schema-e-o-conflito-do-campo-service).

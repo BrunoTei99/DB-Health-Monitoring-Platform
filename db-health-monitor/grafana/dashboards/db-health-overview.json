@@ -5,8 +5,8 @@
     "name": "adm9wkd",
     "namespace": "default",
     "uid": "c2619579-b018-4f9e-9120-910a0147301f",
-    "resourceVersion": "1787669568604995",
-    "generation": 41,
+    "resourceVersion": "1787777499890984",
+    "generation": 47,
     "creationTimestamp": "2026-08-25T08:59:14Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "2504759010746368"
@@ -15,7 +15,7 @@
       "grafana.app/createdBy": "user:cfw4vnuv6p3i8b",
       "grafana.app/saved-from-ui": "Grafana v13.2.0 (f681b1359f)",
       "grafana.app/updatedBy": "user:cfw4vnuv6p3i8b",
-      "grafana.app/updatedTimestamp": "2026-08-25T14:52:48Z"
+      "grafana.app/updatedTimestamp": "2026-08-26T20:51:39Z"
     }
   },
   "spec": {
@@ -671,6 +671,82 @@
             }
           }
         }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "PG — Queries lentas (>1s)",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "elasticsearch",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "afwbxf5jqrcw0e"
+                      },
+                      "spec": {
+                        "alias": "",
+                        "bucketAggs": [],
+                        "editorType": "builder",
+                        "metrics": [
+                          {
+                            "id": "1",
+                            "settings": {
+                              "limit": "500"
+                            },
+                            "type": "logs"
+                          }
+                        ],
+                        "preserveQuery": false,
+                        "query": "service.name:postgresql AND message:*duration*",
+                        "queryType": "lucene",
+                        "timeField": "@timestamp"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLevel": true,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -722,7 +798,7 @@
               "x": 13,
               "y": 0,
               "width": 11,
-              "height": 14,
+              "height": 15,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-2"
@@ -745,10 +821,23 @@
           {
             "kind": "GridLayoutItem",
             "spec": {
+              "x": 0,
+              "y": 15,
+              "width": 13,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
               "x": 13,
-              "y": 14,
+              "y": 15,
               "width": 11,
-              "height": 12,
+              "height": 11,
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-4"
@@ -764,7 +853,7 @@
     "tags": [],
     "timeSettings": {
       "timezone": "Europe/Lisbon",
-      "from": "now-30m",
+      "from": "now-15m",
       "to": "now",
       "autoRefresh": "10s",
       "autoRefreshIntervals": [
