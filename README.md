@@ -212,6 +212,8 @@ Cada fase tem dois documentos: `conceitos.md` (o "porquê" teórico) e `resumo.m
 | 5 | APM com Application Insights | [fase5-conceitos.md](docs/fase5-conceitos.md) | [fase5-resumo.md](docs/fase5-resumo.md) |
 | 6 | Demo de incidentes | [fase6-conceitos.md](docs/fase6-conceitos.md) | [fase6-resumo.md](docs/fase6-resumo.md) · [guião](docs/fase6-guiao-demo.md) |
 
+Também: [versoes-tecnologias.md](docs/versoes-tecnologias.md) — versões exatas de cada componente da stack (confirmadas nos serviços em execução, não só nas tags do `docker-compose.yml`).
+
 ## Custos
 
 Tudo nesta stack é gratuito para uso local: PostgreSQL, MongoDB, Prometheus, Grafana OSS, os exporters e o Filebeat são open source; Elasticsearch e Kibana correm sob a licença Basic gratuita; o Application Insights fica dentro do free tier de ingestão da Azure (5 GB/mês) para este volume de tráfego.
