@@ -2,7 +2,7 @@
 
 Laboratório de observabilidade que monitoriza duas bases de dados — uma relacional (**PostgreSQL**) e uma NoSQL (**MongoDB**) — cobrindo os três pilares clássicos: **métricas**, **logs** e **traces**, num ambiente 100% reproduzível com Docker Compose.
 
-O projeto está organizado em 6 fases incrementais, cada uma documentada em detalhe em [`docs/`](docs/) (ver secção [Documentação detalhada](#documentação-detalhada)).
+O código do projeto vive em [`db-health-monitor/`](db-health-monitor/). O projeto está organizado em 6 fases incrementais, cada uma documentada em detalhe em [`db-health-monitor/docs/`](db-health-monitor/docs/) (ver secção [Documentação detalhada](#documentação-detalhada)).
 
 ---
 
@@ -95,13 +95,16 @@ flowchart LR
 
 ## Pré-requisitos
 
-- Docker Desktop (Windows: WSL2 com `vm.max_map_count=262144` para o Elasticsearch — ver [fase4-resumo.md](docs/fase4-resumo.md))
+- Docker Desktop (Windows: WSL2 com `vm.max_map_count=262144` para o Elasticsearch — ver [fase4-resumo.md](db-health-monitor/docs/fase4-resumo.md))
 - Python 3.10+ (só para a API da Fase 5)
-- Conta Azure com um recurso Application Insights (opcional, free tier — ver [fase5-resumo.md](docs/fase5-resumo.md))
+- Conta Azure com um recurso Application Insights (opcional, free tier — ver [fase5-resumo.md](db-health-monitor/docs/fase5-resumo.md))
 
 ## Quick start
 
 ```powershell
+# 0. Entrar na pasta do projeto
+cd db-health-monitor
+
 # 1. Arrancar toda a stack (9 containers)
 docker compose up -d
 docker compose ps
@@ -166,17 +169,17 @@ db-health-monitor/
 - Dashboard próprio **"DB Health Overview"** (7 painéis): ligações ativas, commits/s, cache hit ratio, operações/s MongoDB, ligações MongoDB, tamanho da BD, e um painel de logs (queries lentas) — versionado em `grafana/dashboards/db-health-overview.json`
 - Alerta **"PG - Ligacoes elevadas"**: dispara quando as ligações ativas do PostgreSQL excedem 40, com pending period de 2 min (evita falsos positivos por picos momentâneos); ciclo Normal → Pending → Firing → Normal testado com a tempestade de ligações da Fase 3/6
 
-Para reimportar o dashboard: Grafana → Dashboards → New → Import → Upload de `grafana/dashboards/db-health-overview.json`.
+Para reimportar o dashboard: Grafana → Dashboards → New → Import → Upload de `db-health-monitor/grafana/dashboards/db-health-overview.json`.
 
 ![Dashboard DB Health Overview](db-health-monitor/docs/screenshots/Grafana_dashboard.png)
 
 ## Log aggregation
 
-O PostgreSQL corre com `log_min_duration_statement=1000` — toda query mais lenta que 1s fica registada. O Filebeat envia esses logs, mais o stdout/stderr de todos os containers, para o Elasticsearch (data streams `db-logs-*`), pesquisáveis no Kibana ou diretamente num painel do Grafana. Detalhe de implementação relevante: os campos personalizados usam `service.name` (não `service`), para não colidir com o esquema ECS do Elasticsearch — ver [fase4-conceitos.md](docs/fase4-conceitos.md#2-ecs-elastic-common-schema-e-o-conflito-do-campo-service).
+O PostgreSQL corre com `log_min_duration_statement=1000` — toda query mais lenta que 1s fica registada. O Filebeat envia esses logs, mais o stdout/stderr de todos os containers, para o Elasticsearch (data streams `db-logs-*`), pesquisáveis no Kibana ou diretamente num painel do Grafana. Detalhe de implementação relevante: os campos personalizados usam `service.name` (não `service`), para não colidir com o esquema ECS do Elasticsearch — ver [fase4-conceitos.md](db-health-monitor/docs/fase4-conceitos.md#2-ecs-elastic-common-schema-e-o-conflito-do-campo-service).
 
 ## APM / traces (Fase 5)
 
-A API Flask (`api/app.py`) expõe endpoints que consultam as duas bases, mais um `/slow` (deliberadamente lento) e um `/error` (falha ~50% das vezes). Instrumentada com a distro `azure-monitor-opentelemetry`, com instrumentação **explícita** de Flask e PyMongo (a descoberta automática da distro não os ativava de forma fiável — ver [fase5-conceitos.md](docs/fase5-conceitos.md#2-distros-de-opentelemetry-e-o-modelo-de-auto-instrumentação)). Produz um Application Map com PostgreSQL e MongoDB como dependências, e permite fazer drill-down num trace individual para ver exatamente onde o tempo foi gasto.
+A API Flask (`api/app.py`) expõe endpoints que consultam as duas bases, mais um `/slow` (deliberadamente lento) e um `/error` (falha ~50% das vezes). Instrumentada com a distro `azure-monitor-opentelemetry`, com instrumentação **explícita** de Flask e PyMongo (a descoberta automática da distro não os ativava de forma fiável — ver [fase5-conceitos.md](db-health-monitor/docs/fase5-conceitos.md#2-distros-de-opentelemetry-e-o-modelo-de-auto-instrumentação)). Produz um Application Map com PostgreSQL e MongoDB como dependências, e permite fazer drill-down num trace individual para ver exatamente onde o tempo foi gasto.
 
 ```powershell
 cd api
@@ -197,22 +200,22 @@ O `chaos.ps1`/`chaos.sh` injeta 3 falhas controladas para exercitar as três cam
 .\scripts\chaos.ps1 resolve       # termina as sessões problemáticas
 ```
 
-O guião completo, minuto a minuto, com as falas e os 8 screenshots sugeridos, está em [docs/fase6-guiao-demo.md](docs/fase6-guiao-demo.md).
+O guião completo, minuto a minuto, com as falas e os 8 screenshots sugeridos, está em [db-health-monitor/docs/fase6-guiao-demo.md](db-health-monitor/docs/fase6-guiao-demo.md).
 
 ## Documentação detalhada
 
-Cada fase tem dois documentos: `conceitos.md` (o "porquê" teórico) e `resumo.md` (o "como foi feito", com os problemas reais encontrados e resolvidos):
+Cada fase tem dois documentos: `conceitos.md` (o "porquê" teórico) e `resumo.md` (o "como foi feito", com os problemas reais encontrados e resolvidos), dentro de [`db-health-monitor/docs/`](db-health-monitor/docs/):
 
 | Fase | Conteúdo | Conceitos | Resumo |
 |---|---|---|---|
-| 1 | Infraestrutura base (exporters, healthchecks) | [fase1-conceitos.md](docs/fase1-conceitos.md) | [fase1-resumo.md](docs/fase1-resumo.md) |
-| 2 | Scripts de carga sintética | [fase2-conceitos.md](docs/fase2-conceitos.md) | [fase2-resumo.md](docs/fase2-resumo.md) |
-| 3 | Dashboards e alertas no Grafana | [fase3-conceitos.md](docs/fase3-conceitos.md) | [fase3-resumo.md](docs/fase3-resumo.md) |
-| 4 | Log aggregation (Elasticsearch/Kibana/Filebeat) | [fase4-conceitos.md](docs/fase4-conceitos.md) | [fase4-resumo.md](docs/fase4-resumo.md) |
-| 5 | APM com Application Insights | [fase5-conceitos.md](docs/fase5-conceitos.md) | [fase5-resumo.md](docs/fase5-resumo.md) |
-| 6 | Demo de incidentes | [fase6-conceitos.md](docs/fase6-conceitos.md) | [fase6-resumo.md](docs/fase6-resumo.md) · [guião](docs/fase6-guiao-demo.md) |
+| 1 | Infraestrutura base (exporters, healthchecks) | [fase1-conceitos.md](db-health-monitor/docs/fase1-conceitos.md) | [fase1-resumo.md](db-health-monitor/docs/fase1-resumo.md) |
+| 2 | Scripts de carga sintética | [fase2-conceitos.md](db-health-monitor/docs/fase2-conceitos.md) | [fase2-resumo.md](db-health-monitor/docs/fase2-resumo.md) |
+| 3 | Dashboards e alertas no Grafana | [fase3-conceitos.md](db-health-monitor/docs/fase3-conceitos.md) | [fase3-resumo.md](db-health-monitor/docs/fase3-resumo.md) |
+| 4 | Log aggregation (Elasticsearch/Kibana/Filebeat) | [fase4-conceitos.md](db-health-monitor/docs/fase4-conceitos.md) | [fase4-resumo.md](db-health-monitor/docs/fase4-resumo.md) |
+| 5 | APM com Application Insights | [fase5-conceitos.md](db-health-monitor/docs/fase5-conceitos.md) | [fase5-resumo.md](db-health-monitor/docs/fase5-resumo.md) |
+| 6 | Demo de incidentes | [fase6-conceitos.md](db-health-monitor/docs/fase6-conceitos.md) | [fase6-resumo.md](db-health-monitor/docs/fase6-resumo.md) · [guião](db-health-monitor/docs/fase6-guiao-demo.md) |
 
-Também: [versoes-tecnologias.md](docs/versoes-tecnologias.md) — versões exatas de cada componente da stack (confirmadas nos serviços em execução, não só nas tags do `docker-compose.yml`).
+Também: [versoes-tecnologias.md](db-health-monitor/docs/versoes-tecnologias.md) — versões exatas de cada componente da stack (confirmadas nos serviços em execução, não só nas tags do `docker-compose.yml`) — e [guia-projeto-monitorizacao-bd.md](db-health-monitor/docs/guia-projeto-monitorizacao-bd.md), o guia completo do projeto do zero.
 
 ## Custos
 
