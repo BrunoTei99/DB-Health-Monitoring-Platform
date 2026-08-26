@@ -1,8 +1,34 @@
 filebeat.inputs:
-- type: log
-  enabled: true
-  paths:
-    - /var/log/*.log
 
-output.stdout:
-  pretty: true
+  # ---- Logs do PostgreSQL (ficheiros escritos pelo logging_collector) ----
+  - type: filestream
+    id: postgres-logs
+    paths:
+      - /var/log/postgresql/*.log
+    fields:
+      service.name: postgresql
+    fields_under_root: true
+    parsers:
+      - multiline:
+          type: pattern
+          pattern: '^\d{4}-\d{2}-\d{2}'
+          negate: true
+          match: after
+
+  # ---- Logs de todos os containers (stdout/stderr) ----
+  - type: container
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    fields:
+      service.name: docker
+    fields_under_root: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "db-logs-%{+yyyy.MM.dd}"
+
+setup.template.name: "db-logs"
+setup.template.pattern: "db-logs-*"
+setup.ilm.enabled: false
+
+logging.level: info
